@@ -1,10 +1,10 @@
-一、修改vi /etc/ssh/sshd_config 文件
+#一、修改vi /etc/ssh/sshd_config 文件
 1、修改默认端口：默认Port为22,并且已经注释掉了；修改是把注释去掉，并修改成其它的端口。
 2、禁止root用户远程登陆：修改PermitRootLogin，默认为yes且注释掉了；修改是把注释去掉，并改成no。
 3、PermitEmptyPasswords   no不允许空密码用户login
 
 
-二、ssh的公钥认证配置：
+#二、ssh的公钥认证配置：
 修改vi /etc/ssh/sshd_config 文件
 RSAAuthentication yes        # 启用 RSA 认证（默认是注释掉的，将注释去掉，如果不是yes，改为yes）
 PubkeyAuthentication yes     # 启用公钥认证（默认是注释掉的，将注释去掉，如果不是yes，改为yes）
