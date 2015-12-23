@@ -100,3 +100,6 @@
         stdout{codec => rubydebug}
     }
     
+###logstash start
+
+    nohup ./logstash -f ../config/nginx-kafka-in-es-ou.conf 2>&1 &

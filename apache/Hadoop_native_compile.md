@@ -27,11 +27,29 @@
     yum install openssl-devel
     yum install ncurses-devel
     
+设置环境变量
+
+    vi ~/.bash_profile
+    
+    PATH=$PATH:/usr/local/protobuf/bin
+    
+    source ~/.bash_profile
+    
 开始编译hadoop
 
     tar zxvf hadoop-2.7.1-src.tar.gz
     cd hadoop-2.7.1-src
     mvn package -Pdist,native -DskipTests -Dtar
+    
+设置环境变量
+    
+    vi ~/.bash_profile
+    
+    export HADOOP_HOME=/webserver/hadoop
+    export HADOOP_COMMON_LIB_NATIVE_DIR=${HADOOP_HOME}/lib/native
+    export HADOOP_OPTS="-Djava.library.path=${HADOOP_HOME}/lib/native"
+    
+    source ~/.bash_profile
     
 编译成功后,将{HADOOP_HOME}/lib/native下的文件都复制到安装版的Hadoop,/lib/native下.
 
