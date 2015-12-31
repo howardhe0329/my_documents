@@ -25,9 +25,11 @@
 6. Consumer Group
 	每个Consumer属于一个特定的Consumer Group（可为每个Consumer指定group name，若不指定group name则属于默认的group。
 Kafka的整体架构非常简单，是显式分布式架构，producer、broker（kafka）和consumer都可以有多个。Producer，consumer实现Kafka注册的接口，数据从producer发送到broker，broker承担一个中间缓存和分发的作用。broker分发注册到系统中的consumer。broker的作用类似于缓存，即活跃的数据和离线处理系统之间的缓存。客户端和服务器端的通信，是基于简单，高性能，且与编程语言无关的TCP协议
-![](https://github.com/howardhe0329/my_documents/blob/master/apache/kafka/kafka_1.png)
+![](https://github.com/howardhe0329/my_documents/blob/master/apache/kafka/img/kafka_1.png)
+
 ##Kafka消息发送流程
-![](https://github.com/howardhe0329/my_documents/blob/master/apache/kafka/kafka.png)
+
+![](https://github.com/howardhe0329/my_documents/blob/master/apache/kafka/img/kafka.png)
 1. Producer根据指定的partition方法（round-robin、hash等），将消息发布到指定topic的partition里面。
 2. kafka集群接收到Producer发过来的消息后，将其持久化到硬盘，并保留消息指定时长（可配置），而不关注消息是否被消费。
 3. Consumer从kafka集群pull数据，并控制获取消息的offset。
