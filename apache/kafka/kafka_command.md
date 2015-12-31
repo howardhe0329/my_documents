@@ -41,6 +41,10 @@ leader: 负责消息的读和写；   replicas: 列出所有副本的节点；  
 
     ./kafka-console-consumer.sh --zookeeper localhost:2181 --topic test --from-beginning
     
+###查看consoumer offset位置
+
+    bin/kafka-run-class.sh kafka.tools.ConsumerOffsetChecker --zkconnect localhost:2181 --group test
+    
 
     
 
