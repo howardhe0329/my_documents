@@ -45,8 +45,7 @@
 | message.max.bytes | 1,000,000 | message.max.bytes | 表示消息的最大大小，单位是字节 |
 | min.cleanable.dirty.ratio | 0.5 | log.cleaner.min.cleanable.ratio | 日志清理的频率控制，越大意味着更高效的清理，同时会存在一些空间上的浪费，会被topic创建时的指定参数覆盖 |
 | retention.bytes | None | retention.bytes | topic每个分区的最大文件大小，一个topic的大小限制 = 分区数*log.retention.bytes。-1没有大小限log.retention.bytes和log.retention.minutes任意一个达到要求，都会执行删除，会被topic创建时的指定参数覆盖 |
-| retention.ms | None | log.retention.minutes | 数据存储的最大时间超过这个时间会根据log.cleanup.policy设置的策略处理数据，也就是消费端能够多久去消费数据
-                                                log.retention.bytes和log.retention.minutes达到要求，都会执行删除，会被topic创建时的指定参数覆盖 |
+| retention.ms | None | log.retention.minutes | 数据存储的最大时间超过这个时间会根据log.cleanup.policy设置的策略处理数据，也就是消费端能够多久去消费数据, log.retention.bytes和log.retention.minutes达到要求，都会执行删除，会被topic创建时的指定参数覆盖 |
 | segment.bytes | 1GB | log.segment.bytes | topic的分区是以一堆segment文件存储的，这个控制每个segment的大小，会被topic创建时的指定参数覆盖 |
 | segment.index.bytes | 10MB | log.index.size.max.bytes | 对于segment日志的索引文件大小限制，会被topic创建时的指定参数覆盖 |
 | log.roll.hours | 7 days | log.roll.hours | 这个参数会在日志segment没有达到log.segment.bytes设置的大小，也会强制新建一个segment会被 topic创建时的指定参数覆盖 |
