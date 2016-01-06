@@ -100,6 +100,42 @@
         stdout{codec => rubydebug}
     }
     
+###nginx log logstash-kafka-es.conf
+
+    input {
+        kafka{
+            zk_connect => "192.168.168.3:2181,192.168.168.4:2181,192.168.168.5:2181"
+            group_id => "logstash"
+            topic_id => "nginx_services"
+            codec => plain
+            reset_beginning => false
+            consumer_threads => 2
+            decorate_events => true
+        }
+    }
+    filter {
+        json {
+            source => "message"
+            remove_field => ["message", "connection", "connectionRequests", "timeLocal", "requestVerb", "msec", "upstreamStatus", "sessionKey", "salt", "sign", "keyVersion"]
+        }
+        mutate {
+    	    #rename => ["p_zhenliaoquan.sid", "p_zhenliaoquan_sid"]
+    	    split => ["httpXForwardedFor", ","]
+            convert => ["requestTime", "float", "requestLength", "integer", "responseStatus", "integer", "requestBodyBytes", "integer", "bodyBytes", "integer", "upstreamResponseTime", "float", "userId", "integer", "userType", "integer"]
+        }
+        if [httpXForwardedFor][0] != "unknown" and [httpXForwardedFor][0] != "-" {
+    	    geoip {
+                source => "[httpXForwardedFor][0]"
+       	    }
+        }
+    }
+    output {
+       elasticsearch {
+            hosts => ["192.168.168.21:9200"]
+            index => "logstash-nginx-services-%{+YYYY.MM.dd}"
+       }
+    }
+    
 ###logstash start
 
     nohup ./logstash -f ../config/nginx-kafka-in-es-ou.conf 2>&1 &

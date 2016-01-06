@@ -60,7 +60,19 @@ leader: 负责消息的读和写；   replicas: 列出所有副本的节点；  
 
     bin/kafka-run-class.sh kafka.tools.ConsumerOffsetChecker --zkconnect localhost:2181 --group test
     
+###shutdown broker
+> 主动停止是指broker运行正常，因为机器需要运维（升级操作系统，添加磁盘等）而主动停止broker
 
+* 所有的topic的replica >= 2
+此时，直接停止一个broker，会自动触发leader election操作，不过目前leader election是逐个partition进行，等待所有partition完成leader election耗时较长，这样不可服务的时间就比较长。为了缩短不可服务时间窗口，可以主动触发停止broker操作，这样可以逐个partition转移，直到所有partition完成转移，再停止broker。
+
+
+    ./kafka-run-class.sh kafka.admin.ShutdownBroker --zookeeper localhost:2181 --broker {brokerId} --num.retries 3 --retry.interval.ms 60
+    然后shutdown broker server
+    ./kafka-server-stop.sh
     
+* 存在topic的replica=1
+当存在topic的副本数小于2，只能手工把当前broker上这些topic对应的partition转移到其他broker上。当此broker上剩余的topic的replica > 2时，参照上面的处理方法继续处理。
+见[Replication tools](https://cwiki.apache.org/confluence/display/KAFKA/Replication+tools#Replicationtools-1.ControlledShutdown)
 
     

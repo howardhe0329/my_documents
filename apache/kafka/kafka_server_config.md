@@ -1,6 +1,7 @@
 #broker config
 > server.properties详细配置说明:
 
+
 | Property | Default | Value | 说明 |
 | -------- |:-------:| :-----------------| :----|
 | broker.id |  | 0 | 每一个broker在集群中的唯一表示，要求是正数。当该服务器的IP地址发生改变时，broker.id没有变化，则不会影响consumers的消息情况 |
