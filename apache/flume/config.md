@@ -8,47 +8,33 @@
     #sources kafka
     t1.sources.kafkaSources.type = org.apache.flume.source.kafka.KafkaSource
     t1.sources.kafkaSources.channels = memoryChannel
-    t1.sources.kafkaSources.zookeeperConnect = node1:2181,node2:2181,node3:2181
-    t1.sources.kafkaSources.topic = test
-    t1.sources.kafkaSources.groupId = test1
+    t1.sources.kafkaSources.zookeeperConnect = 192.168.168.3:2181,192.168.168.4:2181,192.168.168.5:2181
+    t1.sources.kafkaSources.topic = nginx_services
+    t1.sources.kafkaSources.groupId = flume_nginx_services
+    
+    t1.sources.kafkaSources.interceptors = i
+    t1.sources.kafkaSources.interceptors.i.type = com.xsl.data.flume.ext.interceptor.NginxLogToHdfsInterceptor$Builder
     
     #sinks hdfs
     t1.sinks.hdfsSink.type = hdfs
     t1.sinks.hdfsSink.channel = memoryChannel
-    t1.sinks.hdfsSink.hdfs.path = hdfs://node1:9000/user/flume/test
-    t1.sinks.hdfsSink.hdfs.filePrefix = test
-    t1.sinks.hdfsSink.hdfs.round = true
-    t1.sinks.hdfsSink.hdfs.roundValue = 10
-    t1.sinks.hdfsSink.hdfs.roundUnit = minute
+    t1.sinks.hdfsSink.hdfs.path = hdfs://192.168.168.2:9000/user/hadoop/nginx/services/%y-%m-%d
+    t1.sinks.hdfsSink.hdfs.filePrefix = %H-
+    t1.sinks.hdfsSink.hdfs.rollInterval = 3600
+    t1.sinks.hdfsSink.hdfs.rollSize = 128000000
+    t1.sinks.hdfsSink.hdfs.rollCount = 0
+    #t1.sinks.hdfsSink.hdfs.round = true
+    #t1.sinks.hdfsSink.hdfs.roundValue = 10
+    #t1.sinks.hdfsSink.hdfs.roundUnit = minute
     t1.sinks.hdfsSink.hdfs.fileType = DataStream
+    #t1.sinks.hdfsSink.hdfs.codeC = Lz4Codec
     
     #channels memory
-    t1.channels.memoryChannel.type = memory
-    t1.channels.memoryChannel.capacity = 100
-    
-    t2.sources = kafkaSources
-    t2.channels = memoryChannel2
-    t2.sinks = esSink
-    
-    #sources kafka
-    t2.sources.kafkaSources.type = org.apache.flume.source.kafka.KafkaSource
-    t2.sources.kafkaSources.channels = memoryChannel2
-    t2.sources.kafkaSources.zookeeperConnect = node1:2181,node2:2181,node3:2181
-    t2.sources.kafkaSources.topic = test
-    t2.sources.kafkaSources.groupId = test2
-    
-    #sinks hdfs
-    t2.sinks.esSink.type = org.apache.flume.sink.elasticsearch.ElasticSearchSink
-    t2.sinks.esSink.channel = memoryChannel2
-    t2.sinks.esSink.indexName = testlog
-    t2.sinks.esSink.indexType = log
-    t2.sinks.esSink.batchSize = 100
-    t2.sinks.esSink.hostNames = node2:9300
-    t2.sinks.esSink.serializer = org.apache.flume.sink.elasticsearch.ElasticSearchDynamicSerializer
-    
-    #channels memory
-    t2.channels.memoryChannel2.type = memory
-    t2.channels.memoryChannel2.capacity = 100
+    t1.channels.memoryChannel.type = SPILLABLEMEMORY
+    t1.channels.memoryChannel.memoryCapacity = 5000
+    t1.channels.memoryChannel.checkpointDir = /home/hadoop/server/flume/checkpoint
+    t1.channels.memoryChannel.dataDirs = /home/hadoop/server/flume/data
+    t1.channels.memoryChannel.overflowCapacity = 1000000
     
 ###flume-tail-kafka.properties
 > 将nginx中的access.log日志写入到kafka中
