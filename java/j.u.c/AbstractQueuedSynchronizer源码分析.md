@@ -1,22 +1,23 @@
-#前言
-> AbstractQueuedSynchronizer类(AQS), 是J.U.C框架的核心类. 提供了实现锁和相关同步器(如信号量, 事件等)依赖于先进先出(FIFO)等待队列
-的框架. 
+# 前言
+
+标签（空格分隔）： J.U.C
+
+---
+
+> AbstractQueuedSynchronizer类(AQS), 是J.U.C框架的核心类. 提供了实现锁和相关同步器(如信号量,事件等)依赖于先进先出(FIFO)等待队列的框架. 
 该类分为两种功能一个是独占功能和共享功能. 它子类中只能实现其中一种功能.
 
-内部类Node是等待队列中的节点, 等待队列是"CLH"锁队列的变体. 通常CLH锁是一个自旋锁.
-Node类有一个waitStatus属性, 该属性用于描述节点的状态.共有四种状态:
-
+## Node类 ##
+>内部类Node是等待队列中的节点, 等待队列是"CLH"锁队列的变体. 通常CLH锁是一个自旋锁.Node类有一个waitStatus属性, 该属性用于描述节点的状态.
+共有四种状态:
 * CANCELLED = 1 表示线程已取消
 * SIGNAL = -1   表示线程等待触发
 * CONDITION = -2    表示线程等待条件
 * PROPAGATE = -3    表示节点状态需要向后传播
 
-
-
-
-1. acquire() 方法
-先尝试获取锁, 如果没有获取到那么将放入到等待队列中并阻塞当前线程.
-
+## 源码分析 ##
+### 1. acquire()方法 ###
+> 先尝试获取锁, 如果没有获取到那么将放入到等待队列中并阻塞当前线程.
 
     public final void acquire(int arg) {
         //尝试获取锁, 
@@ -25,18 +26,15 @@ Node类有一个waitStatus属性, 该属性用于描述节点的状态.共有四
             //设置中断
             selfInterrupt();
     }
-    
-2. tryAcquire()方法
-由具体子类去实现, 如果获取到锁则返回true, 否则为false
 
+### 2. tryAcquire()方法 ###
+> 由具体子类去实现, 如果获取到锁则返回true, 否则为false
 
     protected boolean tryAcquire(int arg) {
         throw new UnsupportedOperationException();
     }
 
-3. acquireQueued()方法
-
-
+### 3. acquireQueued()方法 ###
 
     final boolean acquireQueued(final Node node, int arg) {
         boolean failed = true;
@@ -60,19 +58,22 @@ Node类有一个waitStatus属性, 该属性用于描述节点的状态.共有四
         }
     }
 
-4. addWaiter()方法
-将创建Node并将当前线程加入等待队列, 参数Node mode是 独点还是共享模式. 
+### 4. addWaiter()方法 ###
+> 将创建Node并将当前线程加入等待队列, 参数Node mode是 独点还是共享模式. 
 
 
     private Node addWaiter(Node mode) {
         //创建Node并设置mode
         Node node = new Node(Thread.currentThread(), mode);
-        // Try the fast path of enq; backup to full enq on failure
+        // Try the fast path of enq; backup to full enq on          
+        // failure
         Node pred = tail;
         if (pred != null) { //如果tail不为null
             // 把新建的node节点的前一节点指向tail.
             node.prev = pred;
-            // 然后通过CAS将新创建的node设置为tail, 如果设置成功则把tail的下一个点指向新建的node,其实就是自已.并返回node
+            // 然后通过CAS将新创建的node设置为tail,如果设置             
+            // 成功则把tail的下一个点指向新建的node,其实就是             
+            //自已.并返回node
             // 如果设置未成功,则进入等待队列. 
             if (compareAndSetTail(pred, node)) {
                 pred.next = node;
@@ -84,8 +85,8 @@ Node类有一个waitStatus属性, 该属性用于描述节点的状态.共有四
         return node;
     }
     
-5. enq()方法
-是一个无限循环(也叫自旋), 将Node节眯放入队列的tail. 
+### 5. enq()方法 ###
+> 是一个无限循环(也叫自旋), 将Node节眯放入队列的tail. 
 
 
     private Node enq(final Node node) {
@@ -109,8 +110,8 @@ Node类有一个waitStatus属性, 该属性用于描述节点的状态.共有四
         }
     }
     
-6. acquireQueued()方法
-是一个无限循环
+### 6. acquireQueued()方法 ### 
+> 是一个无限循环
 
 
     final boolean acquireQueued(final Node node, int arg) {
@@ -142,8 +143,7 @@ Node类有一个waitStatus属性, 该属性用于描述节点的状态.共有四
         }
     }
     
-7. shouldParkAfterFailedAcquire()方法
-
+### 7. shouldParkAfterFailedAcquire()方法 ###
 
     //参数pred是参数node的前一个节点, 参数node是当前节点
     private static boolean shouldParkAfterFailedAcquire(Node pred, Node node) {
@@ -179,8 +179,8 @@ Node类有一个waitStatus属性, 该属性用于描述节点的状态.共有四
         return false;
     }
     
-8. parkAndCheckInterrupt()方法
-将当前线程挂起
+###  8. parkAndCheckInterrupt()方法 ###
+> 将当前线程挂起
 
 
     private final boolean parkAndCheckInterrupt() {
@@ -188,8 +188,8 @@ Node类有一个waitStatus属性, 该属性用于描述节点的状态.共有四
         return Thread.interrupted();
     }
     
-9. release()方法
-释放锁. 如果为true则成功; 否则失败
+### 9. release()方法 ### 
+> 释放锁. 如果为true则成功; 否则失败
 
 
     public final boolean release(int arg) {
@@ -204,14 +204,14 @@ Node类有一个waitStatus属性, 该属性用于描述节点的状态.共有四
         return false;
     }
     
-10. tryRelease()方法
-尝试释放锁, 由子类去实现
+### 10. tryRelease()方法 ###
+> 尝试释放锁, 由子类去实现
 
-11. unparkSuccessor()方法
-唤醒head节点线程
-//TODO 好累
+### 11. unparkSuccessor()方法 ###
+> 唤醒head节点线程
 
 
+    //TODO 后续继续整理
     private void unparkSuccessor(Node node) {
         /*
          * If status is negative (i.e., possibly needing signal) try
@@ -221,7 +221,6 @@ Node类有一个waitStatus属性, 该属性用于描述节点的状态.共有四
         int ws = node.waitStatus;
         if (ws < 0)
             compareAndSetWaitStatus(node, ws, 0);
-
         /*
          * Thread to unpark is held in successor, which is normally
          * just the next node.  But if cancelled or apparently null,
@@ -239,3 +238,6 @@ Node类有一个waitStatus属性, 该属性用于描述节点的状态.共有四
             LockSupport.unpark(s.thread);
     }
     
+
+
+
