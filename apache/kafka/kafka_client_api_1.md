@@ -36,8 +36,11 @@
 11. 创建KafkaThread类, 该类是一个后台I/O线程, 主要是用发送记录到服务端.
 12. 注册MBean
 
+##KafkaProducer源码解读
 
-   private KafkaProducer(ProducerConfig config, Serializer<K> keySerializer, Serializer<V> valueSerializer) {
+###create a instance
+
+    private KafkaProducer(ProducerConfig config, Serializer<K> keySerializer, Serializer<V> valueSerializer) {
         try {
             log.trace("Starting the Kafka producer");
             //获取用户设置的配置信息.
@@ -191,5 +194,137 @@
             close(0, TimeUnit.MILLISECONDS, true);
             // now propagate the exception
             throw new KafkaException("Failed to construct kafka producer", t);
+        }
+    }
+    
+###Sender.run方法
+
+    public void run(long now) {
+        Cluster cluster = metadata.fetch();
+        // get the list of partitions with data ready to send
+        // 获取数据分区列表, 并准备发送
+        // 有以下情况会准备好发送数据:
+        // 1. 记录集已满; 2. 记录集在累加器已等待linger.ms的设置; 3. 累加器已超出内存限制,并线程阻塞等待发送数据;
+        // 4. 累加器关闭.
+        RecordAccumulator.ReadyCheckResult result = this.accumulator.ready(cluster, now);
+
+        // if there are any partitions whose leaders are not known yet, force metadata update
+        //如果任何一个partition的leader是未知的, 则强制更新metadata.
+        if (result.unknownLeadersExist)
+            this.metadata.requestUpdate();
+
+        // remove any nodes we aren't ready to send to
+        //遍历准备好的node节点的记录
+        Iterator<Node> iter = result.readyNodes.iterator();
+        long notReadyTimeout = Long.MAX_VALUE;
+        while (iter.hasNext()) {
+            Node node = iter.next();
+            //如果socket的connect未准备好则删除.
+            if (!this.client.ready(node, now)) {
+                iter.remove();
+                notReadyTimeout = Math.min(notReadyTimeout, this.client.connectionDelay(node, now));
+            }
+        }
+
+        // create produce requests
+        //创建记录
+        Map<Integer, List<RecordBatch>> batches = this.accumulator.drain(cluster,
+                                                                         result.readyNodes,
+                                                                         this.maxRequestSize,
+                                                                         now);
+
+        List<RecordBatch> expiredBatches = this.accumulator.abortExpiredBatches(this.requestTimeout, cluster, now);
+        // update sensors
+        for (RecordBatch expiredBatch : expiredBatches)
+            this.sensors.recordErrors(expiredBatch.topicPartition.topic(), expiredBatch.recordCount);
+
+        sensors.updateProduceRequestMetrics(batches);
+        List<ClientRequest> requests = createProduceRequests(batches, now);
+        // If we have any nodes that are ready to send + have sendable data, poll with 0 timeout so this can immediately
+        // loop and try sending more data. Otherwise, the timeout is determined by nodes that have partitions with data
+        // that isn't yet sendable (e.g. lingering, backing off). Note that this specifically does not include nodes
+        // with sendable data that aren't ready to send since they would cause busy looping.
+        long pollTimeout = Math.min(result.nextReadyCheckDelayMs, notReadyTimeout);
+        if (result.readyNodes.size() > 0) {
+            log.trace("Nodes with data ready to send: {}", result.readyNodes);
+            log.trace("Created {} produce requests: {}", requests.size(), requests);
+            pollTimeout = 0;
+        }
+        for (ClientRequest request : requests)
+            client.send(request, now);
+
+        // if some partitions are already ready to be sent, the select time would be 0;
+        // otherwise if some partition already has some data accumulated but not ready yet,
+        // the select time will be the time difference between now and its linger expiry time;
+        // otherwise the select time will be the time difference between now and the metadata expiry time;
+        this.client.poll(pollTimeout, now);
+    }
+
+###send方法
+> 该方法是异步发送记录,当发送被确认时提供了回调方法. 当消息记录存储到待发送记录的缓存区中,即该方法就立即返回结果. 这允许发送
+多条记录并行非阻塞的等待响应结果. 方法返回RecordMetadata类包含该partition的发送记录和已分配的offset. 当调用Future.get方法
+时将阻塞直到关联的请求完成, 然后返回请求的记录metadata或者抛出任何异常.
+
+
+    @Override
+    public Future<RecordMetadata> send(ProducerRecord<K, V> record, Callback callback) {
+        try {
+            // first make sure the metadata for the topic is available
+            long startTime = time.milliseconds();
+            //根据topic 获取 partitions
+            waitOnMetadata(record.topic(), this.maxBlockTimeMs);
+            byte[] serializedKey;
+            try {
+                serializedKey = keySerializer.serialize(record.topic(), record.key());
+            } catch (ClassCastException cce) {
+                throw new SerializationException("Can't convert key of class " + record.key().getClass().getName() +
+                        " to class " + producerConfig.getClass(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG).getName() +
+                        " specified in key.serializer");
+            }
+            //校验是否超时, 超时时间默认是60s
+            checkMaybeGetRemainingTime(startTime);
+            byte[] serializedValue;
+            try {
+                serializedValue = valueSerializer.serialize(record.topic(), record.value());
+            } catch (ClassCastException cce) {
+                throw new SerializationException("Can't convert value of class " + record.value().getClass().getName() +
+                        " to class " + producerConfig.getClass(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG).getName() +
+                        " specified in value.serializer");
+            }
+            checkMaybeGetRemainingTime(startTime);
+            //获取partition number.
+            int partition = partition(record, serializedKey, serializedValue, metadata.fetch());
+            checkMaybeGetRemainingTime(startTime);
+            int serializedSize = Records.LOG_OVERHEAD + Record.recordSize(serializedKey, serializedValue);
+            //
+            ensureValidRecordSize(serializedSize);
+            TopicPartition tp = new TopicPartition(record.topic(), partition);
+            log.trace("Sending record {} with callback {} to topic {} partition {}", record, callback, record.topic(), partition);
+            long remainingTime = checkMaybeGetRemainingTime(startTime);
+            RecordAccumulator.RecordAppendResult result = accumulator.append(tp, serializedKey, serializedValue, callback, remainingTime);
+            if (result.batchIsFull || result.newBatchCreated) {
+                log.trace("Waking up the sender since topic {} partition {} is either full or getting a new batch", record.topic(), partition);
+                this.sender.wakeup();
+            }
+            return result.future;
+            // handling exceptions and record the errors;
+            // for API exceptions return them in the future,
+            // for other exceptions throw directly
+        } catch (ApiException e) {
+            log.debug("Exception occurred during message send:", e);
+            if (callback != null)
+                callback.onCompletion(null, e);
+            this.errors.record();
+            return new FutureFailure(e);
+        } catch (InterruptedException e) {
+            this.errors.record();
+            throw new InterruptException(e);
+        } catch (BufferExhaustedException e) {
+            this.errors.record();
+            this.metrics.sensor("buffer-exhausted-records").record();
+            throw e;
+        } catch (KafkaException e) {
+            this.errors.record();
+            throw e;
         }
     }
