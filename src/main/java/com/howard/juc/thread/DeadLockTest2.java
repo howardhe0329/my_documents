@@ -34,6 +34,14 @@ package com.howard.juc.thread;
  */
 public class DeadLockTest2 {
 
+    private static void sleep(long millis) {
+        try {
+            Thread.sleep(millis);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+    }
+
     public static void main(String[] args) {
 
         Object object1 = new Object();
@@ -41,11 +49,7 @@ public class DeadLockTest2 {
 
         Thread thread1 = new Thread(() -> {
             synchronized (object1) {
-                try {
-                    Thread.sleep(100);
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
+                sleep(100);
                 synchronized (object2) {
                     System.out.println("get lock object2");
                 }
@@ -63,11 +67,7 @@ public class DeadLockTest2 {
         for (int i = 0; i < 5; i++) {
             System.out.println("Thread name: " + thread1.getName() + ", state: " + thread1.getState().name());
             System.out.println("Thread name: " + thread2.getName() + ", state: " + thread2.getState().name());
-            try {
-                Thread.sleep(i * 1000);
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
+            sleep(1000);
         }
     }
 }

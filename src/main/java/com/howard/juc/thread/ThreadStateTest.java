@@ -4,7 +4,7 @@ import java.util.concurrent.TimeUnit;
 
 /**
  * 本代码主要是学习Thread的State的几种状态, 关于状态的详解可以访问:
- *
+ * https://github.com/howardhe0329/my_documents/blob/master/java/thread/Thread%E7%9A%84State%E7%B1%BB%E8%AF%A6%E8%A7%A3.md
  * Created by howard on 16/1/16.
  */
 public class ThreadStateTest {

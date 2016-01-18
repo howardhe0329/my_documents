@@ -9,6 +9,6 @@
 
 
   [1]: /java/j.u.c
-  [2]: /java/jmv
-  [2]: /java/thread
+  [2]: /java/jvm
+  [3]: /java/thread
 
