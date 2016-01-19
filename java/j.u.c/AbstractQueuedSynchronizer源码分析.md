@@ -1,19 +1,38 @@
 # 前言
-
-标签（空格分隔）： J.U.C
-
 ---
 
-> AbstractQueuedSynchronizer类(AQS), 是J.U.C框架的核心类. 提供了实现锁和相关同步器(如信号量,事件等)依赖于先进先出(FIFO)等待队列的框架. 
+> AbstractQueuedSynchronizer类(AQS), 是J.U.C框架的核心类。 是用来构建锁或者其它同步组件的基础框架。
+
+##基本原理##
+> 它使用了一个用int类型的state属性表示同步状态，通过内置的FIFO队列来完成资源获取线程的排队工作。
 该类分为两种功能一个是独占功能和共享功能. 它子类中只能实现其中一种功能.
 
-## Node类 ##
->内部类Node是等待队列中的节点, 等待队列是"CLH"锁队列的变体. 通常CLH锁是一个自旋锁.Node类有一个waitStatus属性, 该属性用于描述节点的状态.
+## 同步队列 ##
+> AbstractQueuedSynchronizer是用同步队列来完成同步状态的管理。假设当前线程获取同步状态失败时，则把当前线程以及等待信息构造成为一个节点（Node)并将其加入同步队列中，同时会**阻塞当前线程**。当同步状态释放时，会把首节点中的线程唤醒，使其再次尝试获取同步状态。等待队列是"CLH"锁队列的变体。通常CLH锁是一个自旋锁。
+
+## Node节点 ##
+> 内部类Node是等待队列中的节点。它用来保存线程的引用、等待状态以及前驱和后继节点。
+
+### Node waitStatus属性 ###
+该属性用于描述节点的状态.
 共有四种状态:
-* CANCELLED = 1 表示线程已取消
-* SIGNAL = -1   表示线程等待触发
-* CONDITION = -2    表示线程等待条件
-* PROPAGATE = -3    表示节点状态需要向后传播
+* CANCELLED = 1 表示线程已取消。由于在同步队列中等待的线程超时或被中断，则会被设置为CANCELLED。
+* SIGNAL = -1   表示线程等待触发。后继节点的线程如果释放了同步状态或者被取消，将会通知后继节点，使后继节点的线程得以运行。
+* CONDITION = -2    表示线程等待条件。该节点线程等待在Condition上，当其他线程对Condition调用了signal()方法后，该节点将会从等待队列中转移到同步队列中，加入到对同步状态的获取中。
+* PROPAGATE = -3    表示下一次共享式同步状态获取将会无条件的被传播下去。
+* 0 初始状态。
+
+### Node.prev ###
+前驱节点，当节点加入队列时被设置。
+
+### Node.next ###
+后继节点
+
+### Node.nextWaiter ###
+等待队列中的后继节点。如果当前节点是共享的，那么这个字段将是一个SHARED常量，也就是说节点类型（独点和共享）和等待队列中的后继节点共用同一个字段
+
+### Node.thread ###
+待获取同步状态的线程引用
 
 ## 源码分析 ##
 ### 1. acquire()方法 ###
@@ -22,6 +41,7 @@
     public final void acquire(int arg) {
         //尝试获取锁, 
         if (!tryAcquire(arg) &&
+            //如果未获取到锁，则放入等待队列
             acquireQueued(addWaiter(Node.EXCLUSIVE), arg))
             //设置中断
             selfInterrupt();
@@ -238,6 +258,11 @@
             LockSupport.unpark(s.thread);
     }
     
+### 12. compareAndSetState(int expect, int update) ###
+> 用CAS更新state状态，保证state设置具有原子性。
 
-
-
+    protected final boolean compareAndSetState(int expect, int update) {
+        // See below for intrinsics setup to support this
+        return unsafe.compareAndSwapInt(this, stateOffset, expect, update);
+    }
+    

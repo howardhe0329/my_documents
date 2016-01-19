@@ -1,4 +1,6 @@
-package com.howard.juc.thread;
+package com.howard.juc.lock;
+
+import com.howard.juc.common.ThreadUtil;
 
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
@@ -25,8 +27,8 @@ import java.util.concurrent.locks.ReentrantLock;
      at java.util.concurrent.locks.AbstractQueuedSynchronizer.acquire(AbstractQueuedSynchronizer.java:1199)
      at java.util.concurrent.locks.ReentrantLock$NonfairSync.lock(ReentrantLock.java:209)
      at java.util.concurrent.locks.ReentrantLock.lock(ReentrantLock.java:285)
-     at com.howard.juc.thread.DeadLockTest.lambda$main$1(DeadLockTest.java:35)
-     at com.howard.juc.thread.DeadLockTest$$Lambda$2/668386784.run(Unknown Source)
+     at com.howard.juc.lock.DeadLockTest.lambda$main$1(DeadLockTest.java:35)
+     at com.howard.juc.lock.DeadLockTest$$Lambda$2/668386784.run(Unknown Source)
      at java.lang.Thread.run(Thread.java:745)
      "Thread-0":
      at sun.misc.Unsafe.park(Native Method)
@@ -37,8 +39,8 @@ import java.util.concurrent.locks.ReentrantLock;
      at java.util.concurrent.locks.AbstractQueuedSynchronizer.acquire(AbstractQueuedSynchronizer.java:1199)
      at java.util.concurrent.locks.ReentrantLock$NonfairSync.lock(ReentrantLock.java:209)
      at java.util.concurrent.locks.ReentrantLock.lock(ReentrantLock.java:285)
-     at com.howard.juc.thread.DeadLockTest.lambda$main$0(DeadLockTest.java:20)
-     at com.howard.juc.thread.DeadLockTest$$Lambda$1/381259350.run(Unknown Source)
+     at com.howard.juc.lock.DeadLockTest.lambda$main$0(DeadLockTest.java:20)
+     at com.howard.juc.lock.DeadLockTest$$Lambda$1/381259350.run(Unknown Source)
      at java.lang.Thread.run(Thread.java:745)
 
      Found 1 deadlock.
@@ -80,14 +82,6 @@ public class DeadLockTest {
         });
         thread2.start();
 
-        for (int i = 0; i < 5; i++) {
-            System.out.println("Thread name: " + thread1.getName() + ", state: " + thread1.getState().name());
-            System.out.println("Thread name: " + thread2.getName() + ", state: " + thread2.getState().name());
-            try {
-                Thread.sleep(i * 1000);
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
-        }
+        ThreadUtil.printThreadState(5, 1000, thread1, thread2);
     }
 }
