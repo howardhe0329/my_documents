@@ -1,7 +1,6 @@
 #!/bin/bash
-PID=`jps -v|grep Application|awk '{print $1}'`
+PID=`cat app.pid`
 if [ $PID != "" ]; then
     kill -9 $PID
 fi
-> nohup.out
 echo "flume agent shutdown"

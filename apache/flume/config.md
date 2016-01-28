@@ -65,3 +65,31 @@
     agent-1.sinks.k1.batchSize = 20
     agent-1.sinks.k1.channel = c1
     
+###flume-http-kafka.properties
+> 将提供http服务 写入到kafka中
+
+    agent-1.sources = s1
+    agent-1.sinks = k1
+    agent-1.channels = c1
+    
+    agent-1.sources.s1.channels = c1
+    agent-1.sinks.k1.channel = c1
+    
+    agent-1.channels.c1.type = file
+    agent-1.channels.c1.checkpointDir = ./../checkpoint
+    agent-1.channels.c1.dataDirs = ./../data
+    
+    agent-1.sources.s1.type = http
+    agent-1.sources.s1.port = 18001
+    agent-1.sources.s1.handler = com.xsl.data.flume.ext.http.DataHandler
+    agent-1.sources.s1.fileHeader = true
+    
+    agent-1.sinks.k1.type = org.apache.flume.sink.kafka.KafkaSink
+    agent-1.sinks.k1.topic = user_behavior_test
+    agent-1.sinks.k1.brokerList = 192.168.101.5:9092
+    agent-1.sinks.k1.requiredAcks = 1
+    agent-1.sinks.k1.batchSize = 20
+    
+
+
+    
