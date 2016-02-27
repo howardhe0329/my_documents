@@ -54,31 +54,7 @@
         throw new UnsupportedOperationException();
     }
 
-### 3. acquireQueued()方法 ###
-
-    final boolean acquireQueued(final Node node, int arg) {
-        boolean failed = true;
-        try {
-            boolean interrupted = false;
-            for (;;) {
-                final Node p = node.predecessor();
-                if (p == head && tryAcquire(arg)) {
-                    setHead(node);
-                    p.next = null; // help GC
-                    failed = false;
-                    return interrupted;
-                }
-                if (shouldParkAfterFailedAcquire(p, node) &&
-                    parkAndCheckInterrupt())
-                    interrupted = true;
-            }
-        } finally {
-            if (failed)
-                cancelAcquire(node);
-        }
-    }
-
-### 4. addWaiter()方法 ###
+### 3. addWaiter()方法 ###
 > 将创建Node并将当前线程加入等待队列, 参数Node mode是 独点还是共享模式. 
 
 
@@ -105,7 +81,7 @@
         return node;
     }
     
-### 5. enq()方法 ###
+### 4. enq()方法 ###
 > 是一个无限循环(也叫自旋), 将Node节眯放入队列的tail. 
 
 
@@ -130,7 +106,7 @@
         }
     }
     
-### 6. acquireQueued()方法 ### 
+### 5. acquireQueued()方法 ### 
 > 是一个无限循环
 
 
@@ -163,7 +139,7 @@
         }
     }
     
-### 7. shouldParkAfterFailedAcquire()方法 ###
+### 6. shouldParkAfterFailedAcquire()方法 ###
 
     //参数pred是参数node的前一个节点, 参数node是当前节点
     private static boolean shouldParkAfterFailedAcquire(Node pred, Node node) {
@@ -199,7 +175,7 @@
         return false;
     }
     
-###  8. parkAndCheckInterrupt()方法 ###
+###  7. parkAndCheckInterrupt()方法 ###
 > 将当前线程挂起
 
 
@@ -208,7 +184,7 @@
         return Thread.interrupted();
     }
     
-### 9. release()方法 ### 
+### 8. release()方法 ### 
 > 释放锁. 如果为true则成功; 否则失败
 
 
@@ -224,10 +200,10 @@
         return false;
     }
     
-### 10. tryRelease()方法 ###
+### 9. tryRelease()方法 ###
 > 尝试释放锁, 由子类去实现
 
-### 11. unparkSuccessor()方法 ###
+### 10. unparkSuccessor()方法 ###
 > 唤醒head节点线程
 
 
@@ -258,7 +234,7 @@
             LockSupport.unpark(s.thread);
     }
     
-### 12. compareAndSetState(int expect, int update) ###
+### 11. compareAndSetState(int expect, int update) ###
 > 用CAS更新state状态，保证state设置具有原子性。
 
     protected final boolean compareAndSetState(int expect, int update) {
