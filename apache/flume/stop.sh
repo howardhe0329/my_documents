@@ -1,6 +1,6 @@
 #!/bin/bash
 PID=`cat app.pid`
 if [ $PID != "" ]; then
-    kill -3 $PID
+    kill -15 $PID
 fi
 echo "flume agent shutdown"
