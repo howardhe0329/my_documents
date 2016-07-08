@@ -178,3 +178,5 @@ root     31677  0.0  0.0      0     0 ?        S    15:10   0:00 [kworker/3:2]
 root       571  0.0  0.1 418488 13084 ?        Ssl  4月01   0:33 /usr/sbin/rsyslogd -n
 root       591  0.0  0.0 126360   556 ?        Ss   4月01   0:12 /usr/sbin/crond -n
 ```
+
+* 查看线程数 `ps -eLf |grep java -c`

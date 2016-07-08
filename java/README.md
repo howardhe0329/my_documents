@@ -11,4 +11,8 @@
   [1]: /java/j.u.c
   [2]: /java/jvm
   [3]: /java/thread
+  
+  
+## 面试题  
+  http://www.lintcode.com/zh-cn/problem/
 
