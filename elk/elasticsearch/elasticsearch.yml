@@ -1,0 +1,116 @@
+# cluster name 集群名称，es会自动发现同一个网段下的es cluster。如果cluster.name一样，就是同一个集群。
+cluster.name: elasticsearch
+
+# node name 节点名称 默认随机指定一个name，该列表在es的jar包中config文件夹里name.txt文件中，其中有很多作者添加的有趣名字。
+node.name: node-2
+
+# ...
+# node.rack: r1
+
+#表示该节点是否有资格选举为master。默认是true。 如果master节点挂了，就会重新选举为master
+node.master: true
+#表示该节点是否存储索引数据，默认true
+node.data:true
+
+#表示默认索引分片个数，默认是5片
+index.number_of_shards: 5
+#设置默认索引副本个数，默认为1个副本
+index.number_of_replicas: 1
+
+#设置索引数据的存储路径，可以设置多个存储路径，用逗号分隔
+path.data: /data/elk
+#设置配置文件的存储路径，默认是es根目录下的config文件夹
+path.conf: /path/to/conf
+#设置日志文件的存储路径，默认是es根目录下的logs文件夹
+path.logs: /path/to/logs
+#设置插件的存放路径，默认是es根目录下的plugins文件夹
+path.plugins: /path/to/plugins
+
+
+#表示锁住内存， 官方建议ES_HEAP_SIZE环境变量设置大约一半的可用内存在系统上，并且进程的所有者可以使用此限制。 用`ulimit -l` 查看
+#当系统大量使用swaping时，es的性能会很差。所以对内存要求比较高。
+bootstrap.mlockall: true
+
+#设置绑定地址, 这个参数是用来同时设置bind_host和publish_host上面两个参数。
+network.host: 192.168.0.2
+#设置绑定的ip地址，可以是ipv4或ipv6的，默认为0.0.0.0。
+#network.bind_host: 192.168.0.2
+#设置其它节点和该节点交互的ip地址，如果不设置它会自动判断，值必须是个真实的ip地址。
+network.publish_host: 192.168.0.2
+#设置对外服务的http端口，默认9200
+http.port: 9200
+#是否使用http协议对外提供服务，默认为true，开启。
+#http.enabled: false
+#设置内容的最大容量，默认100mb
+http.max_content_length: 100mb
+#设置节点间交互的tcp端口，默认是9300。
+transport.tcp.port: 9300
+#设置是否压缩tcp传输时的数据，默认为false，不压缩。
+transport.tcp.compress: true
+
+
+#设置集群中N个节点启动时进行数据恢复，默认为1。
+#gateway.recover_after_nodes: 3
+#设置初始化数据恢复进程的超时时间，默认是5分钟。
+#gateway.recover_after_time: 5m
+#设置这个集群中节点的数量，默认为2，一旦这N个节点启动，就会立即进行数据恢复。
+#gateway.expected_nodes: 2
+#gateway的类型，默认为local即为本地文件系统，可以设置为本地文件系统，分布式文件系统，hadoop的HDFS，和amazon的s3服务器。
+#gateway.type: local
+
+
+#设置这个参数来保证集群中的节点可以知道其它N个有master资格的节点。默认为1. 通常设置为集群节点总数/2 + 1 值。来防止split brain
+discovery.zen.minimum_master_nodes: 1
+#设置集群中自动发现其它节点时ping连接超时时间，默认为3秒，对于比较差的网络环境可以高点的值来防止自动发现时出错。
+discovery.zen.ping.timeout: 3s
+#设置是否打开多播发现节点，默认是true。
+discovery.zen.ping.multicast.enabled: false
+#设置集群中master节点的初始列表，可以通过这些节点来自动发现新加入集群的节点。
+discovery.zen.ping.unicast.hosts: ["host1", "host2:port", "host3[portX-portY]"]
+
+
+#初始化数据恢复时，并发恢复线程的个数，默认为4。
+cluster.routing.allocation.node_initial_primaries_recoveries: 4
+#添加删除节点或负载均衡时并发恢复线程的个数，默认为4。
+cluster.routing.allocation.node_concurrent_recoveries: 2
+
+#设置数据恢复时限制的带宽，如入100mb，默认为0，即无限制。
+indices.recovery.max_size_per_sec: 0
+#设置这个参数来限制从其它分片恢复数据时最大同时打开并发流的个数，默认为5。
+indices.recovery.concurrent_streams: 5
+
+#表示字段数据缓存的最大值。设置百分比表示设置一个节点的堆内存大小的比例，例如50%. 也可以是一个数字，如12GB。默认是无限制。
+#当对索引数据进行排序或聚合操作的时候，系统将会对所有的字段值加哉到内存中（缓存）以便提供快速访问文档中这些值。
+indices.fielddata.cache.size:  50%
+
+indices.breaker.fielddata.limit: 60%
+indices.breaker.request.limit: 40%
+indices.breaker.total.limit: 70%
+
+#表示用于并发再平衡的分片数。此属性的设置要取决于硬盘的条件、CPU数量、IO性能等。
+cluster.routing.allocation.cluster_concurrent_rebalance: 2
+#表示在给节点分配分片时将考虑磁盘空间。 分片分配会考虑两种情况：低位值、高位值。
+#设置低位值cluster.routing.allocation.disk.watermark.low 和高位值cluster.routing.allocation.disk.watermark.high
+cluster.routing.allocation.disk.threshold_enabled: true
+#低位值对应的磁盘使用率，达到后ES不再分配新分片
+cluster.routing.allocation.disk.watermark.low: 95%
+#高位值对应的磁盘使用率，达到后分片开始移出节点
+cluster.routing.allocation.disk.watermark.high: 98%
+
+#设置防止所有索引数据被删除
+action.disable_delete_all_indices: true
+
+script.engine.groovy.inline.aggs: on
+
+
+下面是一些查询时的慢日志参数设置
+index.search.slowlog.level: TRACE
+index.search.slowlog.threshold.query.warn: 10s
+index.search.slowlog.threshold.query.info: 5s
+index.search.slowlog.threshold.query.debug: 2s
+index.search.slowlog.threshold.query.trace: 500ms
+
+index.search.slowlog.threshold.fetch.warn: 1s
+index.search.slowlog.threshold.fetch.info: 800ms
+index.search.slowlog.threshold.fetch.debug: 500ms
+index.search.slowlog.threshold.fetch.trace: 200ms

@@ -1,0 +1,18 @@
+<configuration>
+    <property>
+        <name>hbase.rootdir</name>
+        <value>hdfs://xxx.xxx.xxx.xxx:9000/hbase</value>
+    </property>
+    <property>
+        <name>hbase.cluster.distributed</name>
+        <value>true</value>
+    </property>
+    <property>
+        <name>hbase.zookeeper.quorum</name>
+        <value>xxx.xxx.xxx.xxx,192.168.99.3,192.168.99.4</value>
+    </property>
+    <property>
+        <name>hbase.tmp.dir</name>
+        <value>file:/tmp/hbase</value>
+    </property>
+</configuration>
