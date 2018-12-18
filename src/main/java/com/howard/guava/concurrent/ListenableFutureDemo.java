@@ -27,7 +27,7 @@ public class ListenableFutureDemo {
                 System.out.format("Thread name: %s, Execute onFailure. \n", Thread.currentThread().getName());
                 System.out.println(t);
             }
-        });
+        }, service);
         System.out.format("Thread name: %s, shutdown\n", Thread.currentThread().getName());
         listeningExecutorService.shutdownNow();
         try {

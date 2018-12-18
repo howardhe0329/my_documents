@@ -8,6 +8,7 @@ import java.util.concurrent.locks.Lock;
 /**
  * implement Lock interface
  * Created by howard on 16/6/2.
+ * @author howard
  */
 public class Mutex implements Lock {
 

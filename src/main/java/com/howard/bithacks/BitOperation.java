@@ -46,7 +46,7 @@ public class BitOperation {
 //        System.out.format("数字 {%d} 将第n=%d位转换，其结果为: %d\n", x, n, result);
 
         System.out.println(Integer.valueOf("00101010", 2));
-        int x = 42;
+        int x = 4;
         System.out.println(Integer.toBinaryString(x));
         int result = x & (x - 1);
         System.out.println(Integer.toBinaryString(result));
